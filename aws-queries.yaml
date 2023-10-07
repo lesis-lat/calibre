@@ -1,0 +1,193 @@
+
+-- Ver usuários com MFA habilitado/desabilitado
+select name, title, create_date, user_id, mfa_enabled from aws_iam_user; 
+
+
+
+-- Ver security groups que permitem trafego de entrada de qualquer IP
+select
+  group_name,
+  group_id
+from
+  aws_vpc_security_group_rule
+where
+  type = 'ingress'
+  and cidr_ip = '0.0.0.0/0';
+
+
+
+-- Consulta para verificar se os security groups têm regras de liberação em ranges de portas
+select
+  group_name,
+  group_id
+from
+  aws_vpc_security_group_rule
+where
+  type = 'ingress'
+  and cidr_ip = '0.0.0.0/0'
+  and (to_port is null or to_port != from_port);
+
+
+
+
+-- List unencrypted volumes
+select volume_id, encrypted from aws_ebs_volume where not encrypted;
+
+-- List unencrypted volumes attached to each instance
+select
+  i.instance_id,
+  vols -> 'Ebs' ->> 'VolumeId' as vol_id,
+  vol.encrypted
+from
+  aws_ec2_instance as i
+  cross join
+    jsonb_array_elements(block_device_mappings) as vols
+  join
+    aws_ebs_volume as vol
+    on vol.volume_id = vols -> 'Ebs' ->> 'VolumeId'
+where
+  not vol.encrypted;
+
+
+
+-- pegar todos os IPs públicos
+select eni.association_public_ip AS public_ip from aws_ec2_network_interface AS eni where eni.association_public_ip is not Null;
+
+
+
+
+-- Enumerar todos os host names
+select
+  r.name as hostname,
+  type,
+  jsonb_array_elements_text(records) as resource_record
+from
+  aws_route53_zone as z,
+  aws_route53_record as r
+where r.zone_id = z.id
+  and (type LIKE 'A' OR type LIKE 'CNAME')
+  and z.private_zone=false
+  and jsonb_pretty(records) not like '%dkim%'
+  and jsonb_pretty(records) not like '%acm-validations.aws.%';
+
+
+
+-- Listar todas as URLS do s3 bucket
+select
+  'https://' || name || '.s3.' || region || '.amazonaws.com/' as url
+from
+  aws_s3_bucket
+where
+  bucket_policy_is_public is True;
+
+
+
+
+-- Enumerar security groups que estão sem uso, sem nenhum vinculo com ec2
+with associated_sg as (
+  select
+    sg ->> 'GroupId' as secgrp_id
+  from
+    aws_ec2_network_interface,
+    jsonb_array_elements(groups) as sg
+  group by
+    sg ->> 'GroupId'
+  union
+  select
+    sg ->> 'GroupId' as secgrp_id
+  from
+    aws_ec2_instance,
+    jsonb_array_elements(security_groups) as sg
+  group by
+    sg ->> 'GroupId'
+)
+select
+  distinct s.arn as resource,
+  case
+    when a.secgrp_id is not null then 'ok'
+    else 'alarm'
+  end as status,
+  case
+    when a.secgrp_id is not null then s.title || ' is in use.'
+    else s.title || ' not in use.'
+  end as reason,
+  s.region,
+  s.account_id
+from
+  aws_vpc_security_group as s
+  left join associated_sg as a on s.group_id = a.secgrp_id;
+
+
+-- Checar EC2 que está com EBS anexado mas sem criptografia
+select
+i.instance_id,
+vols -> 'Ebs' ->> 'VolumeId' as vol_id,
+vol.encrypted
+from
+aws_ec2_instance as i
+cross join jsonb_array_elements(block_device_mappings) as vols
+join aws_ebs_volume as vol on vol.volume_id = vols -> 'Ebs' ->> 'VolumeId'
+where
+not vol.encrypted;
+
+
+-- List of security groups whose SSH and RDP access is not restricted from the internet
+select
+  sg.group_name,
+  sg.group_id,
+  sgr.type,
+  sgr.ip_protocol,
+  sgr.from_port,
+  sgr.to_port,
+  cidr_ip
+from
+  aws_vpc_security_group as sg
+  join aws_vpc_security_group_rule as sgr on sg.group_name = sgr.group_name
+where
+  sgr.type = 'ingress'
+  and sgr.cidr_ip = '0.0.0.0/0'
+  and (
+    (
+      sgr.ip_protocol = '-1' -- all traffic
+      and sgr.from_port is null
+    )
+    or (
+      sgr.from_port <= 22
+      and sgr.to_port >= 22
+    )
+    or (
+      sgr.from_port <= 3389
+      and sgr.to_port >= 3389
+    )
+  );
+
+-- listar S3 buckets com o SSE Desativado, criptografia em repouso
+select
+  title
+from
+  aws_s3_bucket
+where
+  title in (
+    select
+      title
+    from
+      aws_s3_bucket,
+      jsonb_array_elements(server_side_encryption_configuration->'Rules') as rules
+    where
+      rules->>'BucketKeyEnabled' = 'false'
+  );
+
+
+
+-- listar o nome dos buckets que estão com o versionamento Desativado
+select title from aws_s3_bucket where versioning_enabled = 'false';
+
+
+-- List of unattached EBS volumes#
+select
+  volume_id,
+  volume_type
+from
+  aws_ebs_volume
+where
+  jsonb_array_length(attachments) = 0;
