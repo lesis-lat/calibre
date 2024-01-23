@@ -29,3 +29,7 @@ Activate AWS Security Hub
 Enable Amazon Detective
  aws detective create-graph
 
+
+aws ec2 enable-ebs-encryption-by-default --region 'us-east-1' 
+
+
