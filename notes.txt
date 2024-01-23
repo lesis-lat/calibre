@@ -1,0 +1,31 @@
+Configuration Management
+
+
+    # Initialize the AWS Config client
+
+    config_client = boto3.client('config')
+
+    # Start the configuration recorder
+
+    response = config_client.start_configuration_recorder(
+
+        ConfigurationRecorderName='default'
+)
+print(response)
+
+
+Centralized logging and monitoring in AWS
+Collect logs with CloudTrail and store in S3
+    aws cloudtrail create-trail --name MyTrail --s3-bucket-name secure-
+    logging-bucket
+
+
+Encrypt data with KMS
+    aws kms create-key --description "Key for data encryption"
+
+Activate AWS Security Hub
+    aws securityhub enable-security-hub --region us-west-1
+
+Enable Amazon Detective
+ aws detective create-graph
+
