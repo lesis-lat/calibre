@@ -1,0 +1,15 @@
+aws ec2 describe-vpcs -> Ver todas as VPCs
+aws ec2 describe-vpcs --vpc-ids vpc-0a69a5cc493a540a3 # VPC específica
+
+aws iam list-users
+aws iam list-user-policies --user-name CloudAppSecurityAWS
+aws iam list-attached-user-policies --user-name velero
+aws iam list-groups-for-user --user-name velero
+
+aws route53 list-hosted-zones -> Lista os domínios gerais
+
+
+aws route53 list-resource-record-sets --hosted-zone-id Z02264843N0ZZ2BQ2OWQY | jq -r '.ResourceRecordSets[].Name'
+
+
+Qual usuário tem permissão de AttachUserPolicy? Com isso ele pode escalar privilégios
