@@ -15,3 +15,4 @@ aws route53 list-resource-record-sets --hosted-zone-id Z02264843N0ZZ2BQ2OWQY | j
 Qual usuário tem permissão de AttachUserPolicy? Com isso ele pode escalar privilégios
 
 aws iam get-account-password-policy
+aws cloudtrail describe-trails
