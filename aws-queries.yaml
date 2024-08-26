@@ -28,11 +28,6 @@ where
   and (to_port is null or to_port != from_port);
 
 
-
-
--- List unencrypted volumes
-select volume_id, encrypted from aws_ebs_volume where not encrypted;
-
 -- List unencrypted volumes attached to each instance
 select
   i.instance_id,
