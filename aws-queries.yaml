@@ -200,3 +200,65 @@ unattached_ebs_volumes:
       aws_ebs_volume
     where
       jsonb_array_length(attachments) = 0;
+
+older_ami_versions:
+  description: "List EC2 instances running on AMI images older than 6 months."
+  query: |
+    select
+      instance_id,
+      ami_launch_index,
+      launch_time
+    from
+      aws_ec2_instance
+    where
+      launch_time < now() - interval '6 months';
+
+unencrypted_rds:
+  description: "List unencrypted RDS instances."
+  query: |
+    select
+      db_instance_identifier,
+      storage_encrypted
+    from
+      aws_rds_db_instance
+    where
+      storage_encrypted = false;
+
+allowing_traffic:
+  description: "List security groups allowing traffic on all ports (0-65535)."
+  query: |
+    select
+      group_name,
+      group_id,
+      from_port,
+      to_port
+    from
+      aws_vpc_security_group_rule
+    where
+      type = 'ingress'
+      and from_port = 0
+      and to_port = 65535;
+
+no_detailed_monitoring:
+  description: "List EC2 instances without detailed monitoring enabled."
+  query: |
+    select
+      instance_id,
+      instance_type,
+      monitoring_state
+    from
+      aws_ec2_instance
+    where
+      monitoring_state = 'disabled';
+
+list_console_users:
+  description: "List IAM users with console access."
+  query: |
+    select
+      name,
+      user_id,
+      password_last_used
+    from
+      aws_iam_user
+    where
+      password_last_used is not null;
