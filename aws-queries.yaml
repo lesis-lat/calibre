@@ -2,21 +2,7 @@
 -- Ver usuários com MFA habilitado/desabilitado
 select name, title, create_date, user_id, mfa_enabled from aws_iam_user; 
 
-
-
--- Ver security groups que permitem trafego de entrada de qualquer IP
-select
-  group_name,
-  group_id
-from
-  aws_vpc_security_group_rule
-where
-  type = 'ingress'
-  and cidr_ip = '0.0.0.0/0';
-
-
-
--- Consulta para verificar se os security groups têm regras de liberação em ranges de portas
+-- Consulta para verificar se os security groups permitem trafego de entrada de qualquer IP e têm regras de liberação em ranges de portas
 select
   group_name,
   group_id
