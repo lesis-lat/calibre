@@ -31,13 +31,13 @@ where
 
 
 
--- pegar todos os IPs públicos
+-- pegar todos os IPs públicos (útil p/ hunting de vulnerabilidades)
 select eni.association_public_ip AS public_ip from aws_ec2_network_interface AS eni where eni.association_public_ip is not Null;
 
 
 
 
--- Enumerar todos os host names
+-- Enumerar todos os host names (útil p/ hunting de vulnerabilidades)
 select
   r.name as hostname,
   type,
@@ -53,15 +53,13 @@ where r.zone_id = z.id
 
 
 
--- Listar todas as URLS do s3 bucket
+-- Listar todas as URLS do s3 bucket (útil p/ hunting de vulnerabilidades)
 select
   'https://' || name || '.s3.' || region || '.amazonaws.com/' as url
 from
   aws_s3_bucket
 where
   bucket_policy_is_public is True;
-
-
 
 
 -- Enumerar security groups que estão sem uso, sem nenhum vinculo com ec2
@@ -157,7 +155,6 @@ where
     where
       rules->>'BucketKeyEnabled' = 'false'
   );
-
 
 
 -- listar o nome dos buckets que estão com o versionamento Desativado
