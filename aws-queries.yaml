@@ -1,23 +1,11 @@
 check_mfa:
   description: "Check users with MFA enabled/disabled"
   query: |
-    select name, title, create_date, user_id, mfa_enabled 
+    select name, title, user_id, mfa_enabled 
     from aws_iam_user;
 
-open_traffic:
-  description: "Check security groups that allow inbound traffic from any IP"
-  query: |
-    select
-      group_name,
-      group_id
-    from
-      aws_vpc_security_group_rule
-    where
-      type = 'ingress'
-      and cidr_ip = '0.0.0.0/0';
-
 check_port_ranges:
-  description: "Check if security groups have port range rules for inbound traffic"
+  description: "Check if the security groups allow inbound traffic from any IP and have rules permitting traffic over port ranges."
   query: |
     select
       group_name,
@@ -42,43 +30,6 @@ unencrypted_volumes:
       join aws_ebs_volume as vol on vol.volume_id = vols -> 'Ebs' ->> 'VolumeId'
     where
       not vol.encrypted;
-
-public_ips:
-  description: "Fetch all public IPs"
-  query: |
-    select
-      eni.association_public_ip AS public_ip
-    from
-      aws_ec2_network_interface AS eni
-    where
-      eni.association_public_ip is not Null;
-
-enumerate_hostnames:
-  description: "Enumerate all hostnames"
-  query: |
-    select
-      r.name as hostname,
-      type,
-      jsonb_array_elements_text(records) as resource_record
-    from
-      aws_route53_zone as z,
-      aws_route53_record as r
-    where
-      r.zone_id = z.id
-      and (type LIKE 'A' OR type LIKE 'CNAME')
-      and z.private_zone=false
-      and jsonb_pretty(records) not like '%dkim%'
-      and jsonb_pretty(records) not like '%acm-validations.aws.%';
-
-list_s3_urls:
-  description: "List all URLs from public S3 buckets"
-  query: |
-    select
-      'https://' || name || '.s3.' || region || '.amazonaws.com/' as url
-    from
-      aws_s3_bucket
-    where
-      bucket_policy_is_public is True;
 
 unused_security_groups:
   description: "List unused security groups without any attachment to EC2"
@@ -115,20 +66,6 @@ unused_security_groups:
     from
       aws_vpc_security_group as s
       left join associated_sg as a on s.group_id = a.secgrp_id;
-
-unencrypted_ebs:
-  description: "Check EC2 instances with unencrypted attached EBS"
-  query: |
-    select
-      i.instance_id,
-      vols -> 'Ebs' ->> 'VolumeId' as vol_id,
-      vol.encrypted
-    from
-      aws_ec2_instance as i
-      cross join jsonb_array_elements(block_device_mappings) as vols
-      join aws_ebs_volume as vol on vol.volume_id = vols -> 'Ebs' ->> 'VolumeId'
-    where
-      not vol.encrypted;
 
 open_ssh_rdp_access:
   description: "List security groups where SSH and RDP access is open to the internet"
@@ -224,21 +161,6 @@ unencrypted_rds:
     where
       storage_encrypted = false;
 
-allowing_traffic:
-  description: "List security groups allowing traffic on all ports (0-65535)."
-  query: |
-    select
-      group_name,
-      group_id,
-      from_port,
-      to_port
-    from
-      aws_vpc_security_group_rule
-    where
-      type = 'ingress'
-      and from_port = 0
-      and to_port = 65535;
-
 no_detailed_monitoring:
   description: "List EC2 instances without detailed monitoring enabled."
   query: |
@@ -250,15 +172,3 @@ no_detailed_monitoring:
       aws_ec2_instance
     where
       monitoring_state = 'disabled';
-
-list_console_users:
-  description: "List IAM users with console access."
-  query: |
-    select
-      name,
-      user_id,
-      password_last_used
-    from
-      aws_iam_user
-    where
-      password_last_used is not null;
