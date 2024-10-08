@@ -1,1 +1,174 @@
+check_mfa:
+  description: "Check users with MFA enabled/disabled"
+  query: |
+    select name, title, user_id, mfa_enabled 
+    from aws_iam_user;
 
+check_port_ranges:
+  description: "Check if the security groups allow inbound traffic from any IP and have rules permitting traffic over port ranges."
+  query: |
+    select
+      group_name,
+      group_id
+    from
+      aws_vpc_security_group_rule
+    where
+      type = 'ingress'
+      and cidr_ip = '0.0.0.0/0'
+      and (to_port is null or to_port != from_port);
+
+unencrypted_volumes:
+  description: "List unencrypted volumes attached to instances"
+  query: |
+    select
+      i.instance_id,
+      vols -> 'Ebs' ->> 'VolumeId' as vol_id,
+      vol.encrypted
+    from
+      aws_ec2_instance as i
+      cross join jsonb_array_elements(block_device_mappings) as vols
+      join aws_ebs_volume as vol on vol.volume_id = vols -> 'Ebs' ->> 'VolumeId'
+    where
+      not vol.encrypted;
+
+unused_security_groups:
+  description: "List unused security groups without any attachment to EC2"
+  query: |
+    with associated_sg as (
+      select
+        sg ->> 'GroupId' as secgrp_id
+      from
+        aws_ec2_network_interface,
+        jsonb_array_elements(groups) as sg
+      group by
+        sg ->> 'GroupId'
+      union
+      select
+        sg ->> 'GroupId' as secgrp_id
+      from
+        aws_ec2_instance,
+        jsonb_array_elements(security_groups) as sg
+      group by
+        sg ->> 'GroupId'
+    )
+    select
+      distinct s.arn as resource,
+      case
+        when a.secgrp_id is not null then 'ok'
+        else 'alarm'
+      end as status,
+      case
+        when a.secgrp_id is not null then s.title || ' is in use.'
+        else s.title || ' not in use.'
+      end as reason,
+      s.region,
+      s.account_id
+    from
+      aws_vpc_security_group as s
+      left join associated_sg as a on s.group_id = a.secgrp_id;
+
+open_ssh_rdp_access:
+  description: "List security groups where SSH and RDP access is open to the internet"
+  query: |
+    select
+      sg.group_name,
+      sg.group_id,
+      sgr.type,
+      sgr.ip_protocol,
+      sgr.from_port,
+      sgr.to_port,
+      cidr_ip
+    from
+      aws_vpc_security_group as sg
+      join aws_vpc_security_group_rule as sgr on sg.group_name = sgr.group_name
+    where
+      sgr.type = 'ingress'
+      and sgr.cidr_ip = '0.0.0.0/0'
+      and (
+        (
+          sgr.ip_protocol = '-1' -- all traffic
+          and sgr.from_port is null
+        )
+        or (
+          sgr.from_port <= 22
+          and sgr.to_port >= 22
+        )
+        or (
+          sgr.from_port <= 3389
+          and sgr.to_port >= 3389
+        )
+      );
+
+unencrypted_s3_buckets:
+  description: "List S3 buckets with server-side encryption (SSE) disabled"
+  query: |
+    select
+      title
+    from
+      aws_s3_bucket
+    where
+      title in (
+        select
+          title
+        from
+          aws_s3_bucket,
+          jsonb_array_elements(server_side_encryption_configuration->'Rules') as rules
+        where
+          rules->>'BucketKeyEnabled' = 'false'
+      );
+
+versioning_disabled_buckets:
+  description: "List S3 buckets with versioning disabled"
+  query: |
+    select
+      title
+    from
+      aws_s3_bucket
+    where
+      versioning_enabled = 'false';
+
+unattached_ebs_volumes:
+  description: "List unattached EBS volumes"
+  query: |
+    select
+      volume_id,
+      volume_type
+    from
+      aws_ebs_volume
+    where
+      jsonb_array_length(attachments) = 0;
+
+older_ami_versions:
+  description: "List EC2 instances running on AMI images older than 6 months."
+  query: |
+    select
+      instance_id,
+      ami_launch_index,
+      launch_time
+    from
+      aws_ec2_instance
+    where
+      launch_time < now() - interval '6 months';
+
+unencrypted_rds:
+  description: "List unencrypted RDS instances."
+  query: |
+    select
+      db_instance_identifier,
+      storage_encrypted
+    from
+      aws_rds_db_instance
+    where
+      storage_encrypted = false;
+
+no_detailed_monitoring:
+  description: "List EC2 instances without detailed monitoring enabled."
+  query: |
+    select
+      instance_id,
+      instance_type,
+      monitoring_state
+    from
+      aws_ec2_instance
+    where
+      monitoring_state = 'disabled';
