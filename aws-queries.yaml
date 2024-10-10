@@ -172,3 +172,75 @@ no_detailed_monitoring:
       aws_ec2_instance
     where
       monitoring_state = 'disabled';
+
+cloudtrail_log_file_validation_disabled:
+  description: "List CloudTrail trails where log file validation is disabled"
+  query: |
+    select
+      trail.name as trail_name,
+      trail.arn as trail_arn,
+      trail.log_file_validation_enabled
+    from
+      aws_cloudtrail_trail as trail
+    where
+      trail.log_file_validation_enabled = false;
+
+cloudtrail_logs_not_encrypted_with_kms:
+  description: "List CloudTrail trails that are not encrypted with KMS Customer Master Keys (CMKs)"
+  query: |
+    select
+      trail.name as trail_name,
+      trail.arn as trail_arn,
+      trail.kms_key_id
+    from
+      aws_cloudtrail_trail as trail
+    where
+      trail.kms_key_id is null or trail.kms_key_id = '';
+
+s3_buckets_open_to_public:
+  description: "List S3 buckets that have public access"
+  query: |
+    select
+      bucket.name as bucket_name,
+      bucket.arn as bucket_arn,
+      bucket.block_public_acls,
+      bucket.ignore_public_acls
+    from
+      aws_s3_bucket as bucket
+    where
+      bucket.block_public_acls = false
+      or bucket.ignore_public_acls = false;
+
+eks_clusters_w_public_endpoint:
+  description: "List EKS clusters with public endpoint access enabled and private access disabled"
+  query: |
+    select
+        name AS cluster_name,
+        arn AS cluster_arn,
+        resources_vpc_config->'VpcId' AS vpc_id,
+        resources_vpc_config->'ClusterSecurityGroupId' AS cluster_security_group_id,
+        resources_vpc_config->'EndpointPrivateAccess' AS endpoint_private_access,
+        resources_vpc_config->'EndpointPublicAccess' AS endpoint_public_access,
+        resources_vpc_config->'PublicAccessCidrs' AS public_access_cidrs,
+        resources_vpc_config->'SubnetIds' AS subnet_ids
+    from
+        aws_eks_cluster
+    where
+        resources_vpc_config->'EndpointPublicAccess' = 'true'
+        and resources_vpc_config->'EndpointPrivateAccess' = 'false';
+
+ecs_services_with_public_ip:
+  description: "List ECS services that automatically assign public IPs"
+  query: |
+    select
+      service_name,
+      arn as service_arn,
+      cluster_arn,
+      account_id,
+      region,
+      network_configuration -> 'AwsvpcConfiguration' ->> 'AssignPublicIp' as assign_public_ip
+    from
+      aws_ecs_service
+    where
+      network_configuration -> 'AwsvpcConfiguration' is not null
+      and network_configuration -> 'AwsvpcConfiguration' ->> 'AssignPublicIp' = 'ENABLED';
