@@ -3,6 +3,8 @@ package Calibre::Utils::Helper{
     use strict;
     use warnings;
 
+    our $VERSION = '0.01';
+
     sub new {
         return <<"EOT";
 
@@ -15,7 +17,7 @@ Command                 Description
 -r, --report            Report type:
                         - 's' or 'single' for a single report of all queries
                         - 'm' or 'multiple' for individual reports for each query
-                        
+
 EOT
         }
 }
