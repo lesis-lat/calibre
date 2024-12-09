@@ -46,3 +46,109 @@ list_console_users:
       aws_iam_user
     where
       password_last_used is not null;
+
+cloudtrail_log_file_validation_disabled:
+  description: "List CloudTrail trails where log file validation is disabled"
+  query: |
+    select
+      trail.name as trail_name,
+      trail.arn as trail_arn,
+      trail.log_file_validation_enabled
+    from
+      aws_cloudtrail_trail as trail
+    where
+      trail.log_file_validation_enabled = false;
+
+cloudtrail_logs_not_encrypted_with_kms:
+  description: "List CloudTrail trails that are not encrypted with KMS Customer Master Keys (CMKs)"
+  query: |
+    select
+      trail.name as trail_name,
+      trail.arn as trail_arn,
+      trail.kms_key_id
+    from
+      aws_cloudtrail_trail as trail
+    where
+      trail.kms_key_id is null or trail.kms_key_id = '';
+
+cloudfront_distributions_s3_origin_non_existent_bucket:
+  description: "List CloudFront distributions that point to non-existent S3 buckets"
+  query: |
+    with existing_buckets as (
+        select
+            name
+        from
+            aws_s3_bucket
+    ),
+    cloudfront_distributions as (
+        select
+            id as distribution_id,
+            jsonb_array_elements(origins) ->> 'domainName' as origin
+        from
+            aws_cloudfront_distribution
+    )
+    select
+        cd.distribution_id,
+        cd.origin
+    from
+        cloudfront_distributions cd
+    left join
+        existing_buckets eb
+    on
+        cd.origin = eb.name
+    where
+        eb.name is null;
+
+iam_roles_without_confused_deputy_prevention:
+  description: "List IAM roles that do not prevent against cross-service confused deputy attacks and do not include services such as Lambda, API Gateway, EC2, and Backup."
+  query: |
+    select
+      arn,
+      name,
+      jsonb_pretty(assume_role_policy) as assume_role_policy
+    from
+      aws_iam_role
+    where
+      not (
+        assume_role_policy::text like '%aws:SourceArn%'
+        or assume_role_policy::text like '%aws:SourceAccount%'
+        or assume_role_policy::text like '%aws:SourceOrgID%'
+        or assume_role_policy::text like '%aws:SourceOrgPaths%'
+        or assume_role_policy::text like '%lambda%'
+        or assume_role_policy::text like '%apigateway%'
+        or assume_role_policy::text like '%ec2%'
+        or assume_role_policy::text like '%backup%'
+        or assume_role_policy::text like '%glue%'
+      )
+    order by
+      name;
+
+ecs_services_with_public_ip:
+  description: "List ECS services that automatically assign public IPs"
+  query: |
+    select
+      service_name,
+      arn as service_arn,
+      cluster_arn,
+      account_id,
+      region,
+      network_configuration -> 'AwsvpcConfiguration' ->> 'AssignPublicIp' as assign_public_ip
+    from
+      aws_ecs_service
+    where
+      network_configuration -> 'AwsvpcConfiguration' is not null
+      and network_configuration -> 'AwsvpcConfiguration' ->> 'AssignPublicIp' = 'ENABLED';
+
+cloudfront_distributions_with_no_default_root_object:
+  description: "List CloudFront distributions that don't have a default root object"
+  query: |
+    select
+        id as distribution_id,
+        status as distribution_status,
+        domain_name,
+        default_root_object,
+        concat('https://', domain_name, '/') as root_url
+    from
+        aws_cloudfront_distribution
+    where
+        default_root_object = '';
