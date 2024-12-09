@@ -1,7 +1,7 @@
 check_mfa:
   description: "Check users with MFA enabled/disabled"
   query: |
-    select name, title, user_id, mfa_enabled 
+    select name, title, user_id, mfa_enabled
     from aws_iam_user;
 
 check_port_ranges:
@@ -65,7 +65,9 @@ unused_security_groups:
       s.account_id
     from
       aws_vpc_security_group as s
-      left join associated_sg as a on s.group_id = a.secgrp_id;
+      left join associated_sg as a on s.group_id = a.secgrp_id
+    where
+      a.secgrp_id is null;
 
 open_ssh_rdp_access:
   description: "List security groups where SSH and RDP access is open to the internet"
@@ -173,30 +175,6 @@ no_detailed_monitoring:
     where
       monitoring_state = 'disabled';
 
-cloudtrail_log_file_validation_disabled:
-  description: "List CloudTrail trails where log file validation is disabled"
-  query: |
-    select
-      trail.name as trail_name,
-      trail.arn as trail_arn,
-      trail.log_file_validation_enabled
-    from
-      aws_cloudtrail_trail as trail
-    where
-      trail.log_file_validation_enabled = false;
-
-cloudtrail_logs_not_encrypted_with_kms:
-  description: "List CloudTrail trails that are not encrypted with KMS Customer Master Keys (CMKs)"
-  query: |
-    select
-      trail.name as trail_name,
-      trail.arn as trail_arn,
-      trail.kms_key_id
-    from
-      aws_cloudtrail_trail as trail
-    where
-      trail.kms_key_id is null or trail.kms_key_id = '';
-
 s3_buckets_open_to_public:
   description: "List S3 buckets that have public access"
   query: |
@@ -204,43 +182,49 @@ s3_buckets_open_to_public:
       bucket.name as bucket_name,
       bucket.arn as bucket_arn,
       bucket.block_public_acls,
-      bucket.ignore_public_acls
+      bucket.ignore_public_acls,
+      'https://' || bucket.name || '.s3.' || bucket.region || '.amazonaws.com/' as url
     from
       aws_s3_bucket as bucket
     where
-      bucket.block_public_acls = false
-      or bucket.ignore_public_acls = false;
+      (bucket.block_public_acls = false or bucket.ignore_public_acls = false)
+      or bucket.bucket_policy_is_public is True;
 
-eks_clusters_w_public_endpoint:
-  description: "List EKS clusters with public endpoint access enabled and private access disabled"
+eks_clusters_with_public_endpoint:
+  description: "List EKS clusters with public endpoint access enabled"
   query: |
     select
-        name AS cluster_name,
-        arn AS cluster_arn,
-        resources_vpc_config->'VpcId' AS vpc_id,
-        resources_vpc_config->'ClusterSecurityGroupId' AS cluster_security_group_id,
-        resources_vpc_config->'EndpointPrivateAccess' AS endpoint_private_access,
-        resources_vpc_config->'EndpointPublicAccess' AS endpoint_public_access,
-        resources_vpc_config->'PublicAccessCidrs' AS public_access_cidrs,
-        resources_vpc_config->'SubnetIds' AS subnet_ids
+        name as cluster_name,
+        arn as cluster_arn,
+        resources_vpc_config->'VpcId' as vpc_id,
+        resources_vpc_config->'ClusterSecurityGroupId' as cluster_security_group_id,
+        resources_vpc_config->'EndpointPrivateAccess' as endpoint_private_access,
+        resources_vpc_config->'EndpointPublicAccess' as endpoint_public_access,
+        resources_vpc_config->'PublicAccessCidrs' as public_access_cidrs,
+        resources_vpc_config->'SubnetIds' as subnet_ids,
+        endpoint as cluster_endpoint
     from
         aws_eks_cluster
     where
         resources_vpc_config->'EndpointPublicAccess' = 'true'
-        and resources_vpc_config->'EndpointPrivateAccess' = 'false';
 
-ecs_services_with_public_ip:
-  description: "List ECS services that automatically assign public IPs"
+ecs_without_readonly_access_to_root_filesystem:
+  description: "List ECS task definitions with ReadonlyRootFilesystem set to false or null"
   query: |
+    with expanded_container_definitions as (
+        select
+            family,
+            revision,
+            jsonb_array_elements(container_definitions) as container_definition
+        from
+            aws_ecs_task_definition
+    )
     select
-      service_name,
-      arn as service_arn,
-      cluster_arn,
-      account_id,
-      region,
-      network_configuration -> 'AwsvpcConfiguration' ->> 'AssignPublicIp' as assign_public_ip
+        family,
+        revision,
+        container_definition ->> 'ReadonlyRootFilesystem' as readonly_root_filesystem
     from
-      aws_ecs_service
+        expanded_container_definitions
     where
-      network_configuration -> 'AwsvpcConfiguration' is not null
-      and network_configuration -> 'AwsvpcConfiguration' ->> 'AssignPublicIp' = 'ENABLED';
+        container_definition ->> 'ReadonlyRootFilesystem' = 'false'
+        or container_definition ->> 'ReadonlyRootFilesystem' is null;
