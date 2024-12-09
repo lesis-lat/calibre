@@ -3,6 +3,9 @@ package Calibre::Engine::Steampipe {
     use warnings;
     use YAML::XS 'LoadFile';
     use Carp;
+    use English qw(-no_match_vars);
+
+    our $VERSION = '0.01';
 
     sub new {
         my ($class, $input_file, $report_type) = @_;
@@ -18,12 +21,18 @@ package Calibre::Engine::Steampipe {
             print "\nRunning query: $query_name...\n";
             print "Description: $description\n";
 
-            my $output = '';
-            open my $cmd, '-|', "steampipe query \"$query\" 2>&1" or croak "Failed to run steampipe query: $!";
+            my $output = q{};
+            my $cmd_error;
+
+            open my $cmd, q{-|}, qq{steampipe query "$query" 2>&1}
+                or do { $cmd_error = $ERRNO; croak "Failed to run steampipe query: $cmd_error" };
             while (<$cmd>) {
                 $output .= $_;
             }
-            close $cmd or carp "Error running query '$query_name': $!";
+            if (!close $cmd) {
+                $cmd_error = $ERRNO;
+                carp "Error running query '$query_name': $cmd_error";
+            }
 
             $report{$query_name} = {
                 description => $description,
@@ -37,14 +46,18 @@ package Calibre::Engine::Steampipe {
                 my $description = $report{$query_name}->{description};
                 my $output = $report{$query_name}->{output};
                 my $output_file = "$query_name-report.yml";
+                my $file_error;
 
-                open my $fh, '>', $output_file or croak "Could not open file '$output_file' for writing: $!";
-                print $fh "$query_name:\n";
-                print $fh "  description: $description\n";
-                print $fh "  output: |\n";
-                $output =~ s/^/    /mgx;
-                print $fh "$output\n";
-                close $fh;
+                {
+                    open my $fh, '>', $output_file
+                        or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
+                    print $fh "$query_name:\n";
+                    print $fh "  description: $description\n";
+                    print $fh "  output: |\n";
+                    $output =~ s/^/    /mgxs;
+                    print $fh "$output\n";
+                    close $fh or carp "Error closing file '$output_file': $ERRNO";
+                }
 
                 push @generated_files, $output_file;
             }
@@ -53,21 +66,25 @@ package Calibre::Engine::Steampipe {
         }
 
         my $output_file = 'report.yml';
-        open my $fh, '>', $output_file or croak "Could not open file '$output_file' for writing: $!";
-        for my $query_name (keys %report) {
-            print $fh "$query_name:\n";
-            print $fh "  description: $report{$query_name}->{description}\n";
-            print $fh "  output: |\n";
-            my $output = $report{$query_name}->{output};
-            $output =~ s/^/    /mgx;
-            print $fh "$output\n";
+        my $file_error;
+
+        {
+            open my $fh, '>', $output_file
+                or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
+            for my $query_name (keys %report) {
+                print $fh "$query_name:\n";
+                print $fh "  description: $report{$query_name}->{description}\n";
+                print $fh "  output: |\n";
+                my $output = $report{$query_name}->{output};
+                $output =~ s/^/    /mgxs;
+                print $fh "$output\n";
+            }
+
+            close $fh or carp "Error closing file '$output_file': $ERRNO";
         }
-        close $fh;
 
         print "\nGenerated report:\n$output_file\n";
-
         return $self;
     }
 }
-
 1;
