@@ -8,6 +8,8 @@ use Calibre::Engine::Steampipe;
 use Calibre::Utils::Helper;
 use Getopt::Long;
 
+our $VERSION = '0.01';
+
 sub main {
     my ($input_file, $report_type);
 
@@ -26,7 +28,7 @@ sub main {
         'm|multiple' => sub { Calibre::Engine::Steampipe->new($input_file, 'multiple') },
     );
 
-    my $action = (grep { $report_type =~ /$_/x } keys %report_actions)[0];
+    my $action = (grep { $report_type =~ /$_/xms } keys %report_actions)[0];
     if ($action) {
         $report_actions{$action}->();
         return 0;
