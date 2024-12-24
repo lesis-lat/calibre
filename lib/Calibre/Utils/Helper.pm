@@ -17,6 +17,7 @@ Command                 Description
 -r, --report            Report type:
                         - 's' or 'single' for a single report of all queries
                         - 'm' or 'multiple' for individual reports for each query
+-c, --config            Configuration file with data in YAML format
 
 EOT
         }
