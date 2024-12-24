@@ -1,0 +1,45 @@
+# Template Configuration File
+# ---------------------------
+# This file defines the organization and its associated accounts for use with calibre.
+# Replace placeholder values with actual information:
+# - organization.name: The name of your organization.
+# - accounts: A list of accounts, each with the following fields:
+#     - name: The account's descriptive name.
+#     - code: A unique identifier for the account.
+#     - access_key: AWS access key.
+#     - secret_key: AWS secret key.
+#     - status: Set to 'active' or 'inactive' depending on the account's usage status.
+#     - details: Additional account-specific details such as:
+#         - type: The type of resource (e.g., IAM, S3, EC2).
+#         - region: The AWS region associated with the account (e.g., us-west-1).
+# You can duplicate the account structure to add more accounts as needed.
+
+organization:
+  name: "ORGANIZATION_NAME"
+  accounts:
+    - name: "ACCOUNT_01"
+      code: "C001"
+      access_key: "ACCESS_KEY"
+      secret_key: "SECRET_KEY"
+      status: "active"
+      details:
+        type: "RESOURCE_TYPE"
+        region: "REGION_CODE"
+
+    - name: "ACCOUNT_02"
+      code: "C002"
+      access_key: "ACCESS_KEY"
+      secret_key: "SECRET_KEY"
+      status: "inactive"
+      details:
+        type: "RESOURCE_TYPE"
+        region: "REGION_CODE"
+
+    - name: "ACCOUNT_03"
+      code: "C003"
+      access_key: "ACCESS_KEY"
+      secret_key: "SECRET_KEY"
+      status: "active"
+      details:
+        type: "RESOURCE_TYPE"
+        region: "REGION_CODE"
