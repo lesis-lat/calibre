@@ -12,7 +12,6 @@ on 'test' => sub {
     requires "File::Temp";
     requires "File::Spec";
     requires "File::Path";
-    requires "Find::Bin";
     requires "IPC::Open3";
     requires "Readonly";
     requires "IO::Handle";
