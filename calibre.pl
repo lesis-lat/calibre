@@ -7,32 +7,35 @@ use lib "./lib/";
 use Calibre::Engine::Steampipe;
 use Calibre::Utils::Helper;
 use Getopt::Long;
+use YAML::XS 'LoadFile';
 
 our $VERSION = '0.01';
 
 sub main {
-    my ($input_file, $report_type);
-
+    my ($input_file, $report_type, $config_file);
     Getopt::Long::GetOptions(
         "i|input=s"  => \$input_file,
         "r|report=s" => \$report_type,
+        "c|config=s" => \$config_file,
     );
 
-    if (!$input_file || !$report_type) {
+    if (!$input_file || !$report_type || !$config_file) {
         print Calibre::Utils::Helper->new();
         return 1;
     }
 
-    my %report_actions = (
-        's|single'   => sub { Calibre::Engine::Steampipe->new($input_file) },
-        'm|multiple' => sub { Calibre::Engine::Steampipe->new($input_file, 'multiple') },
-    );
+    # load organization and active accounts
+    my $data = LoadFile($config_file);
+    my @accounts = grep { $_->{status} && $_->{status} eq 'active' }
+                       @{$data->{organization}->{accounts}};
 
-    my $action = (grep { $report_type =~ /$_/xms } keys %report_actions)[0];
-    if ($action) {
-        $report_actions{$action}->();
-        return 0;
+    if (!@accounts) {
+        die "No active accounts found in configuration file.\n";
     }
+
+    Calibre::Engine::Steampipe->new($input_file, $report_type, $config_file);
+
+    return 0;
 }
 
 exit main();

@@ -4,3 +4,15 @@ requires "Mojo::UserAgent";
 requires "YAML::XS";
 requires "Carp";
 requires "English";
+
+on 'test' => sub {
+    requires "Test::More";
+    requires "Test::Exception";
+    requires "Test::MockModule";
+    requires "File::Temp";
+    requires "File::Spec";
+    requires "File::Path";
+    requires "IPC::Open3";
+    requires "Readonly";
+    requires "IO::Handle";
+};
