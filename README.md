@@ -48,7 +48,7 @@ $ sudo cpanm --installdeps .
 
 ### Configuration 
 
-Edit the template configuration file (config.yaml) to define your organization and associated AWS accounts. Replace placeholder values with actual information, following this format:
+Edit the template configuration file (```config.yaml```) to define your organization and associated AWS accounts. Replace placeholder values with actual information, following this format:
 
 ```yaml
 organization
