@@ -1,14 +1,14 @@
-### Why is This Type of Access Key Necessary for Security Audits?
+### Why is this type of Access Key necessary for Security Audits?
 
-In a security audit, it is crucial to have a user that can access AWS resources and configurations programmatically in order to analyze the environment’s security posture, investigate potential vulnerabilities, and gather necessary data. An Access Key is required for this purpose because it allows automation and access via the AWS Command Line Interface (CLI), SDKs, or APIs, which is essential for conducting thorough security audits without manual intervention through the AWS Management Console.
+In a security audit, it is crucial to have a user with permissions to access AWS resources and configurations programmatically in order to analyze the environment’s security posture, investigate potential vulnerabilities, and gather necessary data. An Access Key is required for this purpose because it allows automation and access via the AWS Command Line Interface (CLI), SDKs, or APIs, which is essential for conducting thorough security audits without manual intervention through the AWS Management Console.
 
 This approach ensures that the audit process can be automated, repeatable, and consistent, which is critical for tracking security changes over time and for compliance with security best practices. Additionally, by using programmatic access, auditors can avoid human error associated with manual logins and work directly with AWS resources in a secure and controlled manner.
 
 ---
 
-### What Permissions Does This Access Key Have?
+### What limitations does this Access Key have?
 
-The access key created for the security audit user is granted the following permissions:
+The Access Key created for the security audit has the following limitations:
 
 **SecurityAudit:**
 

@@ -1,5 +1,7 @@
 # How to Create an Access Key in AWS for Security Audit
 
+You need to have access to the AWS Console access. 
+
 1. **Access IAM**: Go to the IAM console at [console.aws.amazon.com/iam/home](https://console.aws.amazon.com/iam/home).
 2. **Click on "Users"**: In the left-hand menu, select "Users."
 3. **Click on "Add Users"**: Press the button to add a new user.
