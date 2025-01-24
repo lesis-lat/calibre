@@ -31,6 +31,9 @@ By default, Calibre comes with 30+ pre-built queries, including reconnaissanse q
 - [Steampipe](https://steampipe.io/)
 - [AWS Steampipe Plugin](https://hub.steampipe.io/plugins/turbot/aws)
 - AWS credentials with read-only security access
+  > If you are unsure why AWS Access Keys/credentials are needed or how to create them, refer to:  
+  > - [How to create an Access Key](documentation/How-to-create-Access-Key.md)  
+  > - [About the keys used in Calibre](documentation/About-the-keys-used.md)  
 
 ---
 
