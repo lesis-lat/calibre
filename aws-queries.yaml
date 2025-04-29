@@ -228,3 +228,33 @@ ecs_without_readonly_access_to_root_filesystem:
     where
         container_definition ->> 'ReadonlyRootFilesystem' = 'false'
         or container_definition ->> 'ReadonlyRootFilesystem' is null;
+
+inactive_users:
+  description: "Find IAM users who have not logged in for more than 90 days"
+  query: |
+    select
+      user_id,
+      name,
+      create_date,
+      password_last_used,
+      extract(day from current_timestamp - password_last_used) as days_since_last_login
+    from
+      aws_iam_user
+    where
+      password_last_used is not null
+      and password_last_used < (current_timestamp - interval '90 days')
+    union
+    select
+      user_id,
+      name,
+      create_date,
+      password_last_used,
+      extract(day from current_timestamp - create_date) as days_since_creation
+    from
+      aws_iam_user
+    where
+      password_last_used is null
+      and create_date < (current_timestamp - interval '90 days')
+    order by
+      days_since_last_login desc nulls last,
+      name;
