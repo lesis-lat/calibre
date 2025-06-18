@@ -62,14 +62,18 @@ my $query_file = File::Spec->catfile($temp_dir, 'test_queries.yml');
 YAML::XS::DumpFile($query_file, $queries);
 
 my $mock = Test::MockModule->new('Calibre::Engine::Steampipe');
-$mock->mock('open', sub {
+$mock->mock('open', sub {    ## no critic (InputOutput::RequireBriefOpen)
     my ($self, $mode, $cmd) = @_;
     if ($cmd =~ m/steampipe query/sm) {
-        open my $fh, '<', \qq{test output\n}
-            or croak sprintf('Cannot open mock filehandle: %s', $ERRNO);
-        local $INPUT_RECORD_SEPARATOR = undef;
-        my $output = <$fh>;
-        close $fh or croak sprintf('Failed to close filehandle: %s', $ERRNO);
+        my $mock_content = qq{test output\n};
+        my $output;
+        {
+            open my $fh, '<', \$mock_content
+                or croak sprintf('Cannot open mock filehandle: %s', $ERRNO);
+            local $INPUT_RECORD_SEPARATOR = undef;
+            $output = <$fh>;
+            close $fh or croak sprintf('Failed to close filehandle: %s', $ERRNO);
+        }
 
         open my $return_fh, '<', \$output
             or croak sprintf('Cannot create return filehandle: %s', $ERRNO);

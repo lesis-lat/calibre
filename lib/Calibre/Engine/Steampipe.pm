@@ -80,21 +80,23 @@ package Calibre::Engine::Steampipe {
                     my $output_file = "$account_folder/$query_name-report.yml";
                     my $file_error;
 
-                    open my $fh, '>', $output_file
-                        or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
-
-                    print $fh "organization:\n";
-                    print $fh "  name: \"$organization_name\"\n";
-                    print $fh "  account:\n";
-                    print $fh "    - name: \"$account_name\"\n";
-                    print $fh "queries:\n";
-                    print $fh "  $query_name:\n";
-                    print $fh "    description: $account_reports{$account_name}->{$query_name}->{description}\n";
-                    print $fh "    output: |\n";
+                    my $description = $account_reports{$account_name}->{$query_name}->{description};
                     my $output = $account_reports{$account_name}->{$query_name}->{output};
                     $output =~ s/^/      /mgxs;
-                    print $fh "$output\n";
 
+                    my $content = "organization:\n" .
+                        "  name: \"$organization_name\"\n" .
+                        "  account:\n" .
+                        "    - name: \"$account_name\"\n" .
+                        "queries:\n" .
+                        "  $query_name:\n" .
+                        "    description: $description\n" .
+                        "    output: |\n" .
+                        "$output\n";
+
+                    open my $fh, '>', $output_file
+                        or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
+                    print $fh $content;
                     close $fh or carp "Error closing file '$output_file': $ERRNO";
                 }
             }
@@ -107,24 +109,25 @@ package Calibre::Engine::Steampipe {
             my $output_file = "$org_folder/$account_name-report.yml";
             my $file_error;
 
-            open my $fh, '>', $output_file
-                or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
-
-            print $fh "organization:\n";
-            print $fh "  name: \"$organization_name\"\n";
-            print $fh "  account:\n";
-            print $fh "    - name: \"$account_name\"\n";
-            print $fh "queries:\n";
+            my $content = "organization:\n" .
+                "  name: \"$organization_name\"\n" .
+                "  account:\n" .
+                "    - name: \"$account_name\"\n" .
+                "queries:\n";
 
             for my $query_name (keys %{$account_reports{$account_name}}) {
-                print $fh "  $query_name:\n";
-                print $fh "    description: $account_reports{$account_name}->{$query_name}->{description}\n";
-                print $fh "    output: |\n";
+                my $description = $account_reports{$account_name}->{$query_name}->{description};
                 my $output = $account_reports{$account_name}->{$query_name}->{output};
                 $output =~ s/^/      /mgxs;
-                print $fh "$output\n";
+                $content .= "  $query_name:\n" .
+                    "    description: $description\n" .
+                    "    output: |\n" .
+                    "$output\n";
             }
 
+            open my $fh, '>', $output_file
+                or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
+            print $fh $content;
             close $fh or carp "Error closing file '$output_file': $ERRNO";
         }
         print "\nGenerated single report for each account.\n";
