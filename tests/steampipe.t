@@ -62,7 +62,7 @@ my $query_file = File::Spec->catfile($temp_dir, 'test_queries.yml');
 YAML::XS::DumpFile($query_file, $queries);
 
 my $mock = Test::MockModule->new('Calibre::Engine::Steampipe');
-$mock->mock('open', sub {    ## no critic (InputOutput::RequireBriefOpen)
+$mock->mock('open', sub {  
     my ($self, $mode, $cmd) = @_;
     if ($cmd =~ m/steampipe query/sm) {
         my $mock_content = qq{test output\n};
