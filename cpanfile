@@ -11,7 +11,7 @@ on 'test' => sub {
     requires "File::Temp",          "0.2311";
     requires "File::Spec",          "3.80";
     requires "File::Path",          "2.18";
-    requires "IPC::Open3",          "1.24";
+    requires "IPC::Open3",          "1.22";
     requires "Readonly",            "2.05";
     requires "IO::Handle",          "1.55";
 };
