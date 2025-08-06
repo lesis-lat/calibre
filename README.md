@@ -9,6 +9,8 @@
      <a href="https://github.com/instriq/calibre/releases">
       <img src="https://img.shields.io/badge/version-0.0.1-blue.svg">
     </a>
+      <img src="https://img.shields.io/badge/coverage-89.4%25-yellow.svg">
+    </a>
   </p>
 </p>
 
