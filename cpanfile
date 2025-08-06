@@ -1,6 +1,5 @@
 requires "Getopt::Long",            "2.58";
-requires "Mojo::JSON",              "9.41";        
-requires "Mojo::UserAgent",         "9.41";  
+requires "Mojolicious",             "9.41";
 requires "YAML::XS",                "0.904.0";
 requires "Carp",                    "1.52";
 requires "English",                 "5.42.0";
