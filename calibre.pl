@@ -3,7 +3,7 @@
 use 5.030;
 use strict;
 use warnings;
-use lib './lib/';
+use lib 'lib';
 use Calibre::Engine::Steampipe;
 use Calibre::Utils::Helper;
 use Getopt::Long;
@@ -16,13 +16,13 @@ sub main {
     my $config_file = 'config.yaml';
     my $input_file  = 'aws-queries.yaml';
 
-    Getopt::Long::GetOptions(
+    my $options_ok = Getopt::Long::GetOptions(
         "i|input=s"  => \$input_file,
         "r|report=s" => \$report_type,
         "c|config=s" => \$config_file
     );
 
-    if (!$input_file || !$config_file) {
+    if (!$options_ok || !$input_file || !$config_file) {
         print Calibre::Utils::Helper -> new();
 
         return 1;

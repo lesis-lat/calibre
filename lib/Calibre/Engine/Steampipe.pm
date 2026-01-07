@@ -17,7 +17,7 @@ package Calibre::Engine::Steampipe {
         my $organization_name = $config -> {organization} -> {name};
         my $accounts = $config -> {organization} -> {accounts};
 
-        my @active_accounts = grep { $_->{status} eq 'active' } @{$accounts};
+        my @active_accounts = grep { $_ -> {status} eq 'active' } @{$accounts};
 
         if (!@active_accounts) {
             croak "No active accounts found in configuration.";
@@ -33,7 +33,7 @@ package Calibre::Engine::Steampipe {
             my $account_name = $account -> {name};
             my $access_key = $account -> {access_key};
             my $secret_key = $account -> {secret_key};
-            my $region = $account -> {details} -> {region} || 'us-east-1'; 
+            my $region = $account -> {details} -> {region} || 'us-east-1';
 
             print "\nProcessing account: $account_name\n";
 
@@ -43,8 +43,8 @@ package Calibre::Engine::Steampipe {
 
             my %report;
             for my $query_name (keys %{$queries}) {
-                my $description = $queries->{$query_name}->{description};
-                my $query = $queries->{$query_name}->{query};
+                my $description = $queries -> {$query_name} -> {description};
+                my $query = $queries -> {$query_name} -> {query};
 
                 print "Running query: $query_name for $account_name...\n";
                 print "Description: $description\n";
@@ -82,8 +82,8 @@ package Calibre::Engine::Steampipe {
                     my $output_file = "$account_folder/$query_name-report.yml";
                     my $file_error;
 
-                    my $description = $account_reports{$account_name}->{$query_name}->{description};
-                    my $output = $account_reports{$account_name}->{$query_name}->{output};
+                    my $description = $account_reports{$account_name} -> {$query_name} -> {description};
+                    my $output = $account_reports{$account_name} -> {$query_name} -> {output};
                     $output =~ s/^/      /mgxs;
 
                     my $content = "organization:\n" .
@@ -97,9 +97,9 @@ package Calibre::Engine::Steampipe {
                         "$output\n";
 
                     open my $fh, '>', $output_file or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
-                    
-                    print $fh $content;
-                    
+
+                    print {$fh} $content or carp "Error writing file '$output_file': $ERRNO";
+
                     close $fh or carp "Error closing file '$output_file': $ERRNO";
                 }
             }
@@ -120,8 +120,8 @@ package Calibre::Engine::Steampipe {
                 "queries:\n";
 
             for my $query_name (keys %{$account_reports{$account_name}}) {
-                my $description = $account_reports{$account_name}->{$query_name}->{description};
-                my $output = $account_reports{$account_name}->{$query_name}->{output};
+                my $description = $account_reports{$account_name} -> {$query_name} -> {description};
+                my $output = $account_reports{$account_name} -> {$query_name} -> {output};
                 
                 $output =~ s/^/      /mgxs;
                 $content .= "  $query_name:\n" .
@@ -131,9 +131,9 @@ package Calibre::Engine::Steampipe {
             }
 
             open my $fh, '>', $output_file or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
-            
-            print $fh $content;
-            
+
+            print {$fh} $content or carp "Error writing file '$output_file': $ERRNO";
+
             close $fh or carp "Error closing file '$output_file': $ERRNO";
         }
         
