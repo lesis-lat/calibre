@@ -4,14 +4,9 @@ unencrypted_s3_buckets:
     select
       title
     from
-      aws_s3_bucket
+      aws_s3_bucket as buckets
+      left join lateral jsonb_array_elements(
+        buckets.server_side_encryption_configuration->'Rules'
+      ) as rules on true
     where
-      title in (
-        select
-          title
-        from
-          aws_s3_bucket,
-          jsonb_array_elements(server_side_encryption_configuration->'Rules') as rules
-        where
-          rules->>'BucketKeyEnabled' = 'false'
-      );
+      rules is null;
