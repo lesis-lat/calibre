@@ -1,20 +1,13 @@
-lambda_functions_with_sensitive_environment_variables:
-  description: "List Lambda functions exposing sensitive data via environment variables"
+lambda_functions_with_unencrypted_environment_variables:
+  description: "List Lambda functions using environment variables without a customer-managed KMS key"
   query: |
     select
       name as function_name,
       runtime,
+      kms_key_arn,
       environment_variables
     from
       aws_lambda_function
     where
-      environment_variables ?| array[
-        'AWS_ACCESS_KEY_ID',
-        'AWS_SECRET_ACCESS_KEY',
-        'AWS_SESSION_TOKEN',
-        'PASSWORD',
-        'SECRET',
-        'API_KEY',
-        'TOKEN',
-        'PRIVATE_KEY'
-      ];
+      coalesce(jsonb_object_length(environment_variables), 0) > 0
+      and kms_key_arn is null;
