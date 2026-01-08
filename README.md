@@ -120,14 +120,14 @@ Command                 Description
 ```bash
 $ perl calibre.pl --input <QUERY_FILE> --report <REPORT_TYPE> --config <CONFIG_FILE>
 
-$ perl calibre.pl --input aws-queries.yaml --report multiple --config config.yaml
+$ perl calibre.pl --input queries/aws/index.yml --report multiple --config config.yaml
 ```
 
 ---
 
 ### Writing Custom Queries
 
-To create custom queries, refer to the [AWS Steampipe plugin documentation](https://hub.steampipe.io/plugins/turbot/aws/tables) for table definitions. After that, add your query to a YAML file, such as ```aws-queries.yaml``` or ```recon-queries.yaml```, or create your own YAML file to add your query, following Calibre's query's format:
+To create custom queries, refer to the [AWS Steampipe plugin documentation](https://hub.steampipe.io/plugins/turbot/aws/tables) for table definitions. After that, add your query to a YAML file, such as ```queries/aws/s3/buckets-without-encryption.yml``` or ```recon-queries.yaml```, or create your own YAML file to add your query, following Calibre's query's format:
 
 ```yaml
 query_name:
@@ -149,6 +149,8 @@ check_mfa:
     from
       aws_iam_user
 ```
+
+If you are using a query index, update the index file (for example, ```queries/aws/index.yml```) to list each query file under a category.
 
 Extending Calibre is as easy as this!
 

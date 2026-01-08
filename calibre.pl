@@ -14,7 +14,7 @@ our $VERSION = '0.0.1';
 sub main {
     my $report_type = 'single';
     my $config_file = 'config.yaml';
-    my $input_file  = 'aws-queries.yaml';
+    my $input_file  = 'queries/aws/index.yml';
 
     my $options_ok = Getopt::Long::GetOptions(
         "i|input=s"  => \$input_file,

@@ -1,0 +1,9 @@
+versioning_disabled_buckets:
+  description: "List S3 buckets with versioning disabled"
+  query: |
+    select
+      title
+    from
+      aws_s3_bucket
+    where
+      versioning_enabled = 'false';

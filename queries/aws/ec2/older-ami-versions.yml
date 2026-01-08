@@ -1,0 +1,11 @@
+older_ami_versions:
+  description: "List EC2 instances running on AMI images older than 6 months."
+  query: |
+    select
+      instance_id,
+      ami_launch_index,
+      launch_time
+    from
+      aws_ec2_instance
+    where
+      launch_time < now() - interval '6 months';

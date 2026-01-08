@@ -1,0 +1,17 @@
+queries:
+  iam:
+    - "iam/users-without-mfa.yml"
+  ec2:
+    - "ec2/security-groups-open-port-ranges.yml"
+    - "ec2/unencrypted-ebs-volumes.yml"
+    - "ec2/unused-security-groups.yml"
+    - "ec2/open-ssh-rdp-access.yml"
+    - "ec2/unattached-ebs-volumes.yml"
+    - "ec2/older-ami-versions.yml"
+    - "ec2/no-detailed-monitoring.yml"
+  rds:
+    - "rds/unencrypted-rds-instances.yml"
+  s3:
+    - "s3/buckets-without-encryption.yml"
+    - "s3/buckets-without-versioning.yml"
+    - "s3/public-buckets.yml"

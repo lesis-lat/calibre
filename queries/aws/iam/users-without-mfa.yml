@@ -1,0 +1,13 @@
+check_mfa:
+  description: "Check users with MFA enabled/disabled"
+  query: |
+    select
+      name,
+      title,
+      user_id,
+      mfa_enabled
+    from
+      aws_iam_user
+    where
+      password_last_used is not null
+      and mfa_enabled = false;

@@ -1,0 +1,14 @@
+s3_buckets_open_to_public:
+  description: "List S3 buckets that have public access"
+  query: |
+    select
+      bucket.name as bucket_name,
+      bucket.arn as bucket_arn,
+      bucket.block_public_acls,
+      bucket.ignore_public_acls,
+      'https://' || bucket.name || '.s3.' || bucket.region || '.amazonaws.com/' as url
+    from
+      aws_s3_bucket as bucket
+    where
+      (bucket.block_public_acls = false or bucket.ignore_public_acls = false)
+      or bucket.bucket_policy_is_public is True;

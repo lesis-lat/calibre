@@ -1,0 +1,17 @@
+unencrypted_s3_buckets:
+  description: "List S3 buckets with server-side encryption (SSE) disabled"
+  query: |
+    select
+      title
+    from
+      aws_s3_bucket
+    where
+      title in (
+        select
+          title
+        from
+          aws_s3_bucket,
+          jsonb_array_elements(server_side_encryption_configuration->'Rules') as rules
+        where
+          rules->>'BucketKeyEnabled' = 'false'
+      );
