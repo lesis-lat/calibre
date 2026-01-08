@@ -1,6 +1,11 @@
 queries:
   iam:
     - "iam/users-without-mfa.yml"
+    - "iam/inactive-users.yml"
+  ecs:
+    - "ecs/ecs-without-readonly-root-filesystem.yml"
+  eks:
+    - "eks/eks-clusters-with-public-endpoint.yml"
   ec2:
     - "ec2/security-groups-open-port-ranges.yml"
     - "ec2/unencrypted-ebs-volumes.yml"

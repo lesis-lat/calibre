@@ -1,0 +1,20 @@
+ecs_without_readonly_access_to_root_filesystem:
+  description: "List ECS task definitions with ReadonlyRootFilesystem set to false or null"
+  query: |
+    with expanded_container_definitions as (
+        select
+            family,
+            revision,
+            jsonb_array_elements(container_definitions) as container_definition
+        from
+            aws_ecs_task_definition
+    )
+    select
+        family,
+        revision,
+        container_definition ->> 'ReadonlyRootFilesystem' as readonly_root_filesystem
+    from
+        expanded_container_definitions
+    where
+        container_definition ->> 'ReadonlyRootFilesystem' = 'false'
+        or container_definition ->> 'ReadonlyRootFilesystem' is null;
