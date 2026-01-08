@@ -1,0 +1,10 @@
+unencrypted_rds:
+  description: "List unencrypted RDS instances."
+  query: |
+    select
+      db_instance_identifier,
+      storage_encrypted
+    from
+      aws_rds_db_instance
+    where
+      storage_encrypted = false;

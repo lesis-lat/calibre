@@ -1,0 +1,11 @@
+no_detailed_monitoring:
+  description: "List EC2 instances without detailed monitoring enabled."
+  query: |
+    select
+      instance_id,
+      instance_type,
+      monitoring_state
+    from
+      aws_ec2_instance
+    where
+      monitoring_state = 'disabled';
