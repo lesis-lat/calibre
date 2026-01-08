@@ -1,0 +1,20 @@
+lambda_functions_with_sensitive_environment_variables:
+  description: "List Lambda functions exposing sensitive data via environment variables"
+  query: |
+    select
+      name as function_name,
+      runtime,
+      environment_variables
+    from
+      aws_lambda_function
+    where
+      environment_variables ?| array[
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+        'AWS_SESSION_TOKEN',
+        'PASSWORD',
+        'SECRET',
+        'API_KEY',
+        'TOKEN',
+        'PRIVATE_KEY'
+      ];

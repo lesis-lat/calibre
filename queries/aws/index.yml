@@ -20,3 +20,5 @@ queries:
     - "s3/buckets-without-encryption.yml"
     - "s3/buckets-without-versioning.yml"
     - "s3/public-buckets.yml"
+  lambda:
+    - "lambda/lambda-function-configurations.yml"
