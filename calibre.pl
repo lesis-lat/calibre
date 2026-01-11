@@ -29,8 +29,8 @@ sub main {
     }
 
 
-    my $data = LoadFile($config_file);
-    my @accounts = grep { $_ -> {status} && $_ -> {status} eq 'active' } @{$data -> {organization} -> {accounts}};
+    my $configuration = LoadFile($config_file);
+    my @accounts = grep { $_ -> {status} && $_ -> {status} eq 'active' } @{$configuration -> {organization} -> {accounts}};
 
     if (!@accounts) {
         die "No active accounts found in configuration file.\n";

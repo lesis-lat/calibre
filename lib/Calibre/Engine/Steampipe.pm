@@ -15,9 +15,9 @@ package Calibre::Engine::Steampipe {
         my $self = bless {}, $class;
 
         my $queries = _load_queries($input_file);
-        my $config  = LoadFile($config_file);
-        my $organization_name = $config -> {organization} -> {name};
-        my $accounts = $config -> {organization} -> {accounts};
+        my $configuration = LoadFile($config_file);
+        my $organization_name = $configuration -> {organization} -> {name};
+        my $accounts = $configuration -> {organization} -> {accounts};
 
         my @active_accounts = grep { $_ -> {status} eq 'active' } @{$accounts};
 
@@ -26,8 +26,8 @@ package Calibre::Engine::Steampipe {
         }
 
         make_path('reports');
-        my $org_folder = "reports/$organization_name";
-        make_path($org_folder);
+        my $organization_folder = "reports/$organization_name";
+        make_path($organization_folder);
 
         my %account_reports;
 
@@ -52,18 +52,18 @@ package Calibre::Engine::Steampipe {
                 print "Description: $description\n";
 
                 my $output = q{};
-                my $cmd_error;
+                my $command_error;
 
-                open my $cmd, q{-|}, qq{steampipe query "$query" 2>&1}
-                    or do { $cmd_error = $ERRNO; croak "Failed to run steampipe query for $account_name: $cmd_error" };
+                open my $command_handle, q{-|}, qq{steampipe query "$query" 2>&1}
+                    or do { $command_error = $ERRNO; croak "Failed to run steampipe query for $account_name: $command_error" };
                 
-                while (<$cmd>) {
+                while (<$command_handle>) {
                     $output .= $_;
                 }
 
-                if (!close $cmd) {
-                    $cmd_error = $ERRNO;
-                    carp "Error running query '$query_name' for $account_name: $cmd_error";
+                if (!close $command_handle) {
+                    $command_error = $ERRNO;
+                    carp "Error running query '$query_name' for $account_name: $command_error";
                 }
 
                 $report{$query_name} = {
@@ -77,7 +77,7 @@ package Calibre::Engine::Steampipe {
 
         if ($report_type eq 'multiple') {
             for my $account_name (keys %account_reports) {
-                my $account_folder = "$org_folder/$account_name";
+                my $account_folder = "$organization_folder/$account_name";
                 make_path($account_folder);
 
                 for my $query_name (keys %{$account_reports{$account_name}}) {
@@ -112,7 +112,7 @@ package Calibre::Engine::Steampipe {
         } 
 
         for my $account_name (keys %account_reports) {
-            my $output_file = "$org_folder/$account_name-report.yml";
+            my $output_file = "$organization_folder/$account_name-report.yml";
             my $file_error;
 
             my $content = "organization:\n" .
@@ -146,10 +146,10 @@ package Calibre::Engine::Steampipe {
 
     sub _load_queries {
         my ($input_file) = @_;
-        my $data = LoadFile($input_file);
+        my $query_data = LoadFile($input_file);
 
-        if (ref $data eq 'HASH' && exists $data -> {queries}) {
-            my $query_groups = $data -> {queries};
+        if (ref $query_data eq 'HASH' && exists $query_data -> {queries}) {
+            my $query_groups = $query_data -> {queries};
 
             if (ref $query_groups ne 'HASH') {
                 croak "Invalid query index format in '$input_file'.";
@@ -184,7 +184,7 @@ package Calibre::Engine::Steampipe {
             return \%merged_queries;
         }
 
-        return $data;
+        return $query_data;
     }
 
     sub _resolve_query_file {
