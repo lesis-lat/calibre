@@ -54,9 +54,12 @@ package Calibre::Engine::Steampipe {
                 my $output = q{};
                 my $command_error;
 
-                open my $command_handle, q{-|}, qq{steampipe query "$query" 2>&1}
-                    or do { $command_error = $ERRNO; croak "Failed to run steampipe query for $account_name: $command_error" };
-                
+                my $command = qq{steampipe query "$query" 2>&1};
+                if (!open my $command_handle, q{-|}, $command) {
+                    $command_error = $ERRNO;
+                    croak "Failed to run steampipe query for $account_name: $command_error";
+                }
+
                 while (<$command_handle>) {
                     $output .= $_;
                 }
@@ -98,18 +101,25 @@ package Calibre::Engine::Steampipe {
                         "    output: |\n" .
                         "$output\n";
 
-                    open my $fh, '>', $output_file or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
+                    if (!open my $fh, '>', $output_file) {
+                        $file_error = $ERRNO;
+                        croak "Could not open file '$output_file' for writing: $file_error";
+                    }
 
-                    print {$fh} $content or carp "Error writing file '$output_file': $ERRNO";
+                    if (!print {$fh} $content) {
+                        carp "Error writing file '$output_file': $ERRNO";
+                    }
 
-                    close $fh or carp "Error closing file '$output_file': $ERRNO";
+                    if (!close $fh) {
+                        carp "Error closing file '$output_file': $ERRNO";
+                    }
                 }
             }
 
             print "\nGenerated multiple reports for each account.\n";
-            
+
             return $self;
-        } 
+        }
 
         for my $account_name (keys %account_reports) {
             my $output_file = "$organization_folder/$account_name-report.yml";
@@ -124,7 +134,7 @@ package Calibre::Engine::Steampipe {
             for my $query_name (keys %{$account_reports{$account_name}}) {
                 my $description = $account_reports{$account_name} -> {$query_name} -> {description};
                 my $output = $account_reports{$account_name} -> {$query_name} -> {output};
-                
+
                 $output =~ s/^/      /mgxs;
                 $content .= "  $query_name:\n" .
                     "    description: $description\n" .
@@ -132,13 +142,20 @@ package Calibre::Engine::Steampipe {
                     "$output\n";
             }
 
-            open my $fh, '>', $output_file or do { $file_error = $ERRNO; croak "Could not open file '$output_file' for writing: $file_error" };
+            if (!open my $fh, '>', $output_file) {
+                $file_error = $ERRNO;
+                croak "Could not open file '$output_file' for writing: $file_error";
+            }
 
-            print {$fh} $content or carp "Error writing file '$output_file': $ERRNO";
+            if (!print {$fh} $content) {
+                carp "Error writing file '$output_file': $ERRNO";
+            }
 
-            close $fh or carp "Error closing file '$output_file': $ERRNO";
+            if (!close $fh) {
+                carp "Error closing file '$output_file': $ERRNO";
+            }
         }
-        
+
         print "\nGenerated single report for each account.\n";
 
         return $self;
@@ -147,8 +164,16 @@ package Calibre::Engine::Steampipe {
     sub _load_queries {
         my ($input_file) = @_;
         my $query_data = LoadFile($input_file);
+        my $query_data_type = ref $query_data;
+        my $has_query_groups = 0;
 
-        if (ref $query_data eq 'HASH' && exists $query_data -> {queries}) {
+        if ($query_data_type eq 'HASH') {
+            if (exists $query_data -> {queries}) {
+                $has_query_groups = 1;
+            }
+        }
+
+        if ($has_query_groups) {
             my $query_groups = $query_data -> {queries};
 
             if (ref $query_groups ne 'HASH') {
@@ -190,15 +215,21 @@ package Calibre::Engine::Steampipe {
     sub _resolve_query_file {
         my ($input_file, $query_file) = @_;
 
-        return $query_file if -e $query_file;
+        if (-e $query_file) {
+            return $query_file;
+        }
 
         my $base_dir = dirname($input_file);
         my $candidate = File::Spec -> catfile($base_dir, $query_file);
-        return $candidate if -e $candidate;
+        if (-e $candidate) {
+            return $candidate;
+        }
 
         my $parent_dir = dirname($base_dir);
         $candidate = File::Spec -> catfile($parent_dir, $query_file);
-        return $candidate if -e $candidate;
+        if (-e $candidate) {
+            return $candidate;
+        }
 
         croak "Query file '$query_file' referenced in '$input_file' was not found.";
     }
