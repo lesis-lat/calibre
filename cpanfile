@@ -6,7 +6,7 @@ requires "Carp",                    "1.52";
 requires "English",                 "5.42.0";
 
 on 'test' => sub {
-    requires "Test::More",          "1.302214";
+    requires "Test::More", "1.302219";
     requires "Test::Exception",     "0.43";
     requires "Test::MockModule",    "0.180.0";
     requires "File::Temp",          "0.2311";
