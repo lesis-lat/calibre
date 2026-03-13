@@ -3,7 +3,7 @@ requires "Mojo::JSON", "9.42";
 requires "Mojo::UserAgent", "9.42";
 requires "YAML::XS",                "0.904.0";
 requires "Carp",                    "1.52";
-requires "English",                 "5.42.0";
+requires "English", "v5.42.1";
 
 on 'test' => sub {
     requires "Test::More", "1.302219";
