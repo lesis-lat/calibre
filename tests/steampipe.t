@@ -6,18 +6,18 @@ use Test::More;
 use Test::Exception;
 use Test::MockModule;
 use File::Temp qw(tempdir);
-use YAML::XS qw(Dump);
+use YAML::XS   qw(Dump);
 use File::Spec;
 use File::Path qw(make_path remove_tree);
-use Carp qw(croak);
-use English qw(-no_match_vars);
+use Carp       qw(croak);
+use English    qw(-no_match_vars);
 
 use lib '../lib';
 
 our $VERSION = '0.01';
 
 sub cleanup_reports {
-    if (-d 'reports') {
+    if ( -d 'reports' ) {
         remove_tree('reports');
     }
     return;
@@ -31,71 +31,56 @@ use_ok('Calibre::Engine::Steampipe');
 
 my $config = {
     organization => {
-        name => 'TestOrg',
+        name     => 'TestOrg',
         accounts => [
             {
-                name => 'Account1',
+                name   => 'Account1',
                 status => 'active',
-                code => 'TEST1',
+                code   => 'TEST1',
             },
             {
-                name => 'Account2',
+                name   => 'Account2',
                 status => 'inactive',
-                code => 'TEST2',
+                code   => 'TEST2',
             }
         ]
     }
 };
 
-my $temp_dir = tempdir(CLEANUP => 1);
-my $config_file = File::Spec->catfile($temp_dir, 'test_config.yml');
-YAML::XS::DumpFile($config_file, $config);
+my $temp_dir    = tempdir( CLEANUP => 1 );
+my $config_file = File::Spec->catfile( $temp_dir, 'test_config.yml' );
+YAML::XS::DumpFile( $config_file, $config );
 
 my $queries = {
     test_query => {
         description => 'Test query description',
-        query => 'SELECT 1;'
+        query       => 'SELECT 1;'
     }
 };
 
-my $query_file = File::Spec->catfile($temp_dir, 'test_queries.yml');
-YAML::XS::DumpFile($query_file, $queries);
+my $query_file = File::Spec->catfile( $temp_dir, 'test_queries.yml' );
+YAML::XS::DumpFile( $query_file, $queries );
 
 my $mock = Test::MockModule->new('Calibre::Engine::Steampipe');
-$mock->mock('open', sub {  
-    my ($self, $mode, $cmd) = @_;
-    if ($cmd =~ m/steampipe query/sm) {
-        my $mock_content = qq{test output\n};
-        my $output;
-        {
-            open my $fh, '<', \$mock_content
-                or croak sprintf('Cannot open mock filehandle: %s', $ERRNO);
-            local $INPUT_RECORD_SEPARATOR = undef;
-            $output = <$fh>;
-            close $fh or croak sprintf('Failed to close filehandle: %s', $ERRNO);
-        }
-
-        open my $return_fh, '<', \$output
-            or croak sprintf('Cannot create return filehandle: %s', $ERRNO);
-        return $return_fh;
+$mock->mock(
+    '_run_command',
+    sub {
+        return qq{test output\n};
     }
-    return CORE::open($self, $mode, $cmd);
-});
+);
 
 {
     cleanup_reports();
 
     lives_ok(
         sub {
-            Calibre::Engine::Steampipe->new($query_file, 'single', $config_file);
+            Calibre::Engine::Steampipe->new( $query_file, 'single',
+                $config_file );
         },
         'Creates single report without dying'
     );
 
-    ok(
-        -d 'reports/TestOrg',
-        'Organization directory created'
-    );
+    ok( -d 'reports/TestOrg', 'Organization directory created' );
 
     ok(
         -f 'reports/TestOrg/Account1-report.yml',
@@ -110,15 +95,14 @@ $mock->mock('open', sub {
 
     lives_ok(
         sub {
-            Calibre::Engine::Steampipe->new($query_file, 'multiple', $config_file);
+            Calibre::Engine::Steampipe->new( $query_file, 'multiple',
+                $config_file );
         },
         'Creates multiple reports without dying'
     );
 
-    ok(
-        -d 'reports/TestOrg/Account1',
-        'Account directory created for multiple reports'
-    );
+    ok( -d 'reports/TestOrg/Account1',
+        'Account directory created for multiple reports' );
 
     ok(
         -f 'reports/TestOrg/Account1/test_query-report.yml',

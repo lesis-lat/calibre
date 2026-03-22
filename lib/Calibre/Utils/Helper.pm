@@ -14,11 +14,11 @@ package Calibre::Utils::Helper {
             '-------                 -----------',
             '-i, --input             Input file with queries in YAML format',
             '-r, --report            Report type:',
-            "                        - 's' or 'single' for a single report",
+            q{                        - 's' or 'single' for a single report},
             '                          of all queries',
-            "                        - 'm' or 'multiple' for individual",
+            q{                        - 'm' or 'multiple' for individual},
             '                          reports for each query',
-            '-c, --config            Configuration file with data in YAML format',
+'-c, --config            Configuration file with data in YAML format',
         );
 
         return join "\n", @lines;
