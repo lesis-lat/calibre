@@ -11,7 +11,7 @@ on 'test' => sub {
     requires "Test::MockModule", "v0.185.3";
     requires "File::Temp", "0.2312";
     requires "File::Spec",          "3.80";
-    requires "File::Path",          "2.18";
+    requires "File::Path", "2.19";
     requires "IPC::Open3",          "5.42.0";
     requires "Readonly",            "2.05";
     requires "IO::Handle",          "1.55";
